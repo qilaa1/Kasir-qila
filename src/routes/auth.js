@@ -54,7 +54,7 @@ router.post('/login', wrap(async (req, res) => {
 }));
 
 router.get('/me', requireAuth, wrap(async (req, res) => {
-  const data = db.readAll();
+  const data = await db.readAll();
   const user = (data.Users || []).find((u) => toInt(u.id) === toInt(req.user.id) && toInt(u.aktif) !== 0);
   if (!user) throw new AppError('Akun tidak ditemukan atau sudah nonaktif.', 401);
   res.json({
