@@ -162,35 +162,106 @@ window.Pages.penjualan = {
   async muatRiwayat(container) {
     const box = container.querySelector('#sjRiwayat');
     box.innerHTML = UI.skeleton(4);
+  
     try {
-      const data = normalizeArray(await API.get('/api/sales?limit=100'));
+      const response = await API.get('/api/sales?limit=100');
+  
+      // Mendukung respons API berupa array langsung maupun { success, data }.
+      const data = normalizeArray(
+        Array.isArray(response) ? response : response?.data
+      );
+  
       if (!data.length) {
-        box.innerHTML = UI.stateHtml('kosong', 'Belum ada penjualan hari ini.');
+        box.innerHTML = UI.stateHtml(
+          'kosong',
+          'Belum ada penjualan.'
+        );
         return;
       }
-      box.innerHTML = `<div class="table-wrap"><table class="table table-compact">
-        <thead><tr><th>Tanggal</th><th>Item</th><th>Metode</th><th>Total</th><th></th></tr></thead>
-        <tbody>${data.map((s) => `
-          <tr>
-            <td>${UI.esc(s.tanggal)}</td>
-            <td>${normalizeArray(s.items).map((it) => `${UI.esc(it.nama_produk)} ×${UI.angka(it.qty)}`).join(', ')}</td>
-            <td><span class="badge badge-abu">${UI.esc(s.metode_bayar)}</span></td>
-            <td><strong>${UI.rupiah(s.total)}</strong></td>
-            <td><button type="button" class="btn btn-sm btn-ghost" data-struk="${s.id}">🧾</button></td>
-          </tr>`).join('')}
-        </tbody></table></div>`;
-      box.querySelectorAll('[data-struk]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const id = Number(btn.getAttribute('data-struk'));
-          const s = data.find((x) => x.id === id);
-          if (s) this.tampilkanStruk(s);
+  
+      box.innerHTML = `
+        <div class="table-wrap">
+          <table class="table table-compact">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Item</th>
+                <th>Metode</th>
+                <th>Total</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.map((sale, index) => {
+                const items = normalizeArray(sale.items);
+  
+                const daftarItem = items.length
+                  ? items.map(item =>
+                      `${UI.esc(item.nama_produk || '-')} ×${UI.angka(item.qty || 0)}`
+                    ).join(', ')
+                  : 'Detail item tidak tersedia';
+  
+                return `
+                  <tr>
+                    <td>${UI.esc(sale.tanggal || '-')}</td>
+                    <td>${daftarItem}</td>
+                    <td>
+                      <span class="badge badge-abu">
+                        ${UI.esc(sale.metode_bayar || '-')}
+                      </span>
+                    </td>
+                    <td><strong>${UI.rupiah(sale.total || 0)}</strong></td>
+                    <td>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-ghost"
+                        data-struk-index="${index}"
+                        aria-label="Lihat dan cetak struk transaksi ${UI.esc(sale.id)}"
+                      >🧾</button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+  
+      box.querySelectorAll('[data-struk-index]').forEach(button => {
+        button.addEventListener('click', () => {
+          const index = Number(button.getAttribute('data-struk-index'));
+          const sale = data[index];
+  
+          if (!sale) {
+            UI.toast('Data transaksi tidak ditemukan.');
+            return;
+          }
+  
+          const items = normalizeArray(sale.items);
+  
+          if (!items.length) {
+            UI.toast('Detail produk transaksi tidak tersedia.');
+            return;
+          }
+  
+          // Satu klik membuka satu struk yang berisi semua item transaksi.
+          this.tampilkanStruk({
+            ...sale,
+            items
+          });
         });
       });
+  
     } catch (err) {
-      box.innerHTML = UI.stateHtml('error', err.message);
+      console.error('[Riwayat Penjualan]', err);
+  
+      box.innerHTML = UI.stateHtml(
+        'error',
+        err.message || 'Gagal memuat riwayat penjualan.'
+      );
     }
   },
-
+  
   tampilkanStruk(sale) {
     const root = document.getElementById('modalRoot');
     root.hidden = false;
