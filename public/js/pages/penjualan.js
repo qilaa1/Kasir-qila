@@ -262,118 +262,296 @@ window.Pages.penjualan = {
     }
   },
   
-  tampilkanStruk(sale) {
-    const root = document.getElementById('modalRoot');
-    root.hidden = false;
-  
-    const items = normalizeArray(sale.items);
-    const totalItem = items.reduce((sum, item) => sum + Number(item.qty || 0), 0);
-  
-    root.innerHTML = `
-      <div class="modal modal-struk" role="dialog" aria-modal="true">
-  
-        <div class="struk-header">
-          <div class="struk-logo">🍦</div>
-          <h2>USAHA ABANG ADEK</h2>
-          <p class="struk-tagline">Manisnya Kebersamaan</p>
-          <div class="struk-label">STRUK PEMBELIAN</div>
+tampilkanStruk(sale) {
+  const root = document.getElementById('modalRoot');
+
+  if (!root || !sale) {
+    alert('Data struk tidak ditemukan.');
+    return;
+  }
+
+  const items = normalizeArray(sale.items);
+
+  if (items.length === 0) {
+    alert('Detail produk pada transaksi ini tidak ditemukan.');
+    return;
+  }
+
+  const totalItem = items.reduce(
+    (sum, item) => sum + Number(item.qty || 0),
+    0
+  );
+
+  root.hidden = false;
+
+  root.innerHTML = `
+    <div class="modal modal-struk" role="dialog" aria-modal="true">
+
+      <div class="struk-header">
+        <div class="struk-logo">🍦</div>
+        <h2>USAHA ABANG ADEK</h2>
+        <p class="struk-tagline">Manisnya Kebersamaan</p>
+        <div class="struk-label">STRUK PEMBELIAN</div>
+      </div>
+
+      <div class="struk-info">
+        <div>
+          <span>No. Transaksi</span>
+          <strong>SALE-${UI.esc(sale.id)}</strong>
         </div>
-  
-        <div class="struk-info">
-          <div>
-            <span>No. Transaksi</span>
-            <strong>SALE-${UI.esc(sale.id)}</strong>
-          </div>
-          <div>
-            <span>Tanggal</span>
-            <strong>${UI.esc(sale.tanggal || '-')}</strong>
-          </div>
-          <div>
-            <span>Metode Pembayaran</span>
-            <strong>${UI.esc(sale.metode_bayar || '-')}</strong>
-          </div>
+        <div>
+          <span>Tanggal</span>
+          <strong>${UI.esc(sale.tanggal || '-')}</strong>
         </div>
-  
-        <div class="struk-divider"></div>
-  
-        <div class="struk-section-title">DETAIL PESANAN</div>
-  
-        <table class="table table-compact struk-table">
-          <thead>
-            <tr>
-              <th>Produk</th>
-              <th class="struk-center">Qty</th>
-              <th class="struk-right">Harga</th>
-              <th class="struk-right">Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${items.map((it) => `
-              <tr>
-                <td>${UI.esc(it.nama_produk || '-')}</td>
-                <td class="struk-center">${UI.angka(it.qty)}</td>
-                <td class="struk-right">${UI.rupiah(it.harga_jual)}</td>
-                <td class="struk-right">${UI.rupiah(it.subtotal)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-  
-        <div class="struk-divider"></div>
-  
-        <div class="struk-summary">
-          <div class="struk-summary-row">
-            <span>Total jenis produk</span>
-            <span>${items.length} jenis</span>
-          </div>
-          <div class="struk-summary-row">
-            <span>Total jumlah item</span>
-            <span>${UI.angka(totalItem)} item</span>
-          </div>
-          <div class="struk-total">
-            <span>TOTAL PEMBAYARAN</span>
-            <strong>${UI.rupiah(sale.total)}</strong>
-          </div>
-        </div>
-  
-        ${sale.catatan ? `
-          <div class="struk-note">
-            <strong>Catatan:</strong> ${UI.esc(sale.catatan)}
-          </div>
-        ` : ''}
-  
-        <div class="struk-footer">
-          <div class="struk-footer-icon">♡</div>
-          <strong>Terima kasih sudah berbelanja!</strong>
-          <p>Senang bisa menjadi bagian dari hari manismu.</p>
-          <span>USAHA ABANG ADEK · Sampai jumpa kembali!</span>
-        </div>
-  
-        <div class="modal-actions struk-actions">
-          <button type="button" class="btn btn-ghost" data-close>
-            Tutup
-          </button>
-          <button type="button" class="btn btn-primary" id="cetakStruk">
-            🖨️ Cetak Struk
-          </button>
+        <div>
+          <span>Metode Pembayaran</span>
+          <strong>${UI.esc(sale.metode_bayar || '-')}</strong>
         </div>
       </div>
-    `;
-  
-    root.querySelector('[data-close]').addEventListener('click', () => {
-      root.hidden = true;
-      root.innerHTML = '';
-    });
-  
-    
 
-    root.querySelector('#cetakStruk').addEventListener('click', () => {
-      window.print();
-    });
-  },
-  
+      <div class="struk-divider"></div>
 
-  destroy() {
-    if (this._onProductsChanged) window.removeEventListener('products-changed', this._onProductsChanged);
-  }
-};
+      <div class="struk-section-title">DETAIL PESANAN</div>
+
+      <table class="table table-compact struk-table">
+        <thead>
+          <tr>
+            <th>Produk</th>
+            <th class="struk-center">Qty</th>
+            <th class="struk-right">Harga</th>
+            <th class="struk-right">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map((it) => `
+            <tr>
+              <td>${UI.esc(it.nama_produk || '-')}</td>
+              <td class="struk-center">${UI.angka(it.qty)}</td>
+              <td class="struk-right">${UI.rupiah(it.harga_jual)}</td>
+              <td class="struk-right">${UI.rupiah(
+                it.subtotal != null
+                  ? it.subtotal
+                  : Number(it.qty || 0) * Number(it.harga_jual || 0)
+              )}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+
+      <div class="struk-divider"></div>
+
+      <div class="struk-summary">
+        <div class="struk-summary-row">
+          <span>Total jenis produk</span>
+          <span>${items.length} jenis</span>
+        </div>
+        <div class="struk-summary-row">
+          <span>Total jumlah item</span>
+          <span>${UI.angka(totalItem)} item</span>
+        </div>
+        <div class="struk-total">
+          <span>TOTAL PEMBAYARAN</span>
+          <strong>${UI.rupiah(sale.total)}</strong>
+        </div>
+      </div>
+
+      ${sale.catatan ? `
+        <div class="struk-note">
+          <strong>Catatan:</strong> ${UI.esc(sale.catatan)}
+        </div>
+      ` : ''}
+
+      <div class="struk-footer">
+        <div class="struk-footer-icon">♡</div>
+        <strong>Terima kasih sudah berbelanja!</strong>
+        <p>Senang bisa menjadi bagian dari hari manismu.</p>
+        <span>USAHA ABANG ADEK · Sampai jumpa kembali!</span>
+      </div>
+
+      <div class="modal-actions struk-actions">
+        <button type="button" class="btn btn-ghost" data-close>
+          Tutup
+        </button>
+        <button type="button" class="btn btn-primary" id="cetakStruk">
+          🖨️ Cetak Struk
+        </button>
+      </div>
+    </div>
+  `;
+
+  root.querySelector('[data-close]').addEventListener('click', () => {
+    root.hidden = true;
+    root.innerHTML = '';
+  });
+
+  root.querySelector('#cetakStruk').addEventListener('click', () => {
+    // Buat jendela cetak khusus untuk struk ini.
+    const printWindow = window.open('', '_blank', 'width=500,height=700');
+
+    if (!printWindow) {
+      alert('Jendela cetak diblokir browser. Izinkan pop-up untuk aplikasi kasir ini, lalu coba lagi.');
+      return;
+    }
+
+    // Salin stylesheet dengan URL absolut agar tetap bisa dimuat.
+    const stylesheets = Array.from(
+      document.querySelectorAll('link[rel="stylesheet"]')
+    ).map((link) => {
+      const href = new URL(link.href, window.location.href).href;
+      return `<link rel="stylesheet" href="${href}">`;
+    }).join('\n');
+
+    // Salin CSS inline dari halaman.
+    const inlineStyles = Array.from(
+      document.querySelectorAll('style')
+    ).map((style) => style.innerHTML).join('\n');
+
+    const struk = root.querySelector('.modal-struk');
+
+    if (!struk) {
+      printWindow.close();
+      alert('Tampilan struk tidak ditemukan.');
+      return;
+    }
+
+    // Hilangkan tombol Tutup dan Cetak dari hasil cetak.
+    const strukCetak = struk.cloneNode(true);
+    strukCetak.querySelector('.struk-actions')?.remove();
+
+    printWindow.document.open();
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="id">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Struk SALE-${UI.esc(sale.id)}</title>
+
+        ${stylesheets}
+
+        <style>
+          ${inlineStyles}
+
+          @page {
+            size: auto;
+            margin: 8mm;
+          }
+
+          html,
+          body {
+            background: #fff !important;
+            color: #000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+
+          *,
+          *::before,
+          *::after {
+            visibility: visible !important;
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          .modal-struk {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            max-height: none !important;
+            height: auto !important;
+            overflow: visible !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+          }
+
+          .struk-table {
+            display: table !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
+            table-layout: auto !important;
+          }
+
+          .struk-table thead {
+            display: table-header-group !important;
+          }
+
+          .struk-table tbody {
+            display: table-row-group !important;
+          }
+
+          .struk-table tr {
+            display: table-row !important;
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+
+          .struk-table th,
+          .struk-table td {
+            display: table-cell !important;
+            padding: 5px 3px !important;
+            color: #000 !important;
+            overflow-wrap: anywhere;
+          }
+
+          .struk-header,
+          .struk-info,
+          .struk-summary,
+          .struk-footer,
+          .struk-note {
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+
+          .struk-actions,
+          [data-close],
+          #cetakStruk {
+            display: none !important;
+          }
+
+          @media print {
+            html,
+            body {
+              overflow: visible !important;
+              height: auto !important;
+            }
+
+            .modal-struk {
+              overflow: visible !important;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        ${strukCetak.outerHTML}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+
+    // Tunggu stylesheet selesai dimuat sebelum membuka dialog cetak.
+    printWindow.onload = async () => {
+      try {
+        if (printWindow.document.fonts?.ready) {
+          await printWindow.document.fonts.ready;
+        }
+      } catch (error) {
+        // Tetap lanjutkan cetak jika font gagal dimuat.
+      }
+
+      printWindow.focus();
+      printWindow.print();
+    };
+  });
+},
+}
