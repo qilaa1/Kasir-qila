@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kasir Es Krim Jadul</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍦</text></svg>" />
+</head>
+<body>
+
+  <!-- ============================ HALAMAN LOGIN ============================ -->
+  <div id="loginView" class="login-wrap">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="login-logo">🍦</div>
+        <h1>Kasir Es Krim Jadul</h1>
+        <p>Sistem kasir &amp; manajemen usaha</p>
+      </div>
+      <form id="loginForm" novalidate>
+        <div id="loginError" class="form-error" hidden></div>
+        <div class="field">
+          <label for="loginUsername">Username</label>
+          <input type="text" id="loginUsername" name="username" autocomplete="username" placeholder="Masukkan username" required />
+        </div>
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" name="password" autocomplete="current-password" placeholder="Masukkan password" required />
+        </div>
+        <button type="submit" id="loginBtn" class="btn btn-primary btn-block">
+          <span class="btn-label">Masuk</span>
+        </button>
+      </form>
+      <p class="login-hint">Akun awal: <code>admin</code> / <code>admin123</code> — segera ganti password.</p>
+    </div>
+  </div>
+
+  <!-- ============================ APLIKASI UTAMA ============================ -->
+  <div id="appView" class="app-wrap" hidden>
+    <div id="sidebarOverlay" class="sidebar-overlay" hidden></div>
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-brand">
+        <span class="sidebar-logo">🍦</span>
+        <div>
+          <strong>Es Krim Jadul</strong>
+          <small>Manajemen Usaha</small>
+        </div>
+      </div>
+      <nav class="sidebar-nav" id="sidebarNav">
+        <a href="#/dashboard"  class="nav-link" data-page="dashboard">🏠 Dashboard</a>
+        <a href="#/produk"     class="nav-link" data-page="produk">📦 Produk</a>
+        <a href="#/pembelian"  class="nav-link" data-page="pembelian">🚚 Pembelian</a>
+        <a href="#/penjualan"  class="nav-link" data-page="penjualan">🛒 Penjualan / Kasir</a>
+        <a href="#/produksi"   class="nav-link" data-page="produksi">🏭 Produksi</a>
+        <a href="#/pengeluaran" class="nav-link" data-page="pengeluaran">💸 Pengeluaran</a>
+        <a href="#/laporan"    class="nav-link" data-page="laporan">📊 Laporan</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <span id="userAvatar" class="avatar">A</span>
+          <div>
+            <strong id="userName">—</strong>
+            <small id="userRole">—</small>
+          </div>
+        </div>
+        <button type="button" id="logoutBtn" class="btn btn-ghost btn-block">Keluar</button>
+      </div>
+    </aside>
+
+    <div class="main-col">
+      <header class="topbar">
+        <button type="button" id="menuToggle" class="btn btn-icon" aria-label="Buka menu">☰</button>
+        <h2 id="pageTitle">Dashboard</h2>
+        <span id="clock" class="clock"></span>
+      </header>
+      <main id="mainContent" class="content" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <!-- ============================ NOTIFIKASI & MODAL ============================ -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+  <div id="modalRoot" class="modal-overlay" hidden></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/pages/dashboard.js"></script>
+  <script src="/js/pages/produk.js"></script>
+  <script src="/js/pages/pembelian.js"></script>
+  <script src="/js/pages/penjualan.js"></script>
+  <script src="/js/pages/produksi.js"></script>
+  <script src="/js/pages/pengeluaran.js"></script>
+  <script src="/js/pages/laporan.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

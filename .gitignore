@@ -1,0 +1,20 @@
+
+# Rahasia dan konfigurasi lokal
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Log
+*.log
+npm-debug.log*
+
+# Database Excel asli dan backup
+/data/database-usaha.xlsx
+/data/backup/
+
+# File sementara
+.DS_Store
+Thumbs.db

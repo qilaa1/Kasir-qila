@@ -1,0 +1,22 @@
+{
+  "name": "aplikasi-kasir-es-krim-jadul",
+  "version": "1.0.0",
+  "description": "Aplikasi kasir dan manajemen usaha es krim jadul berbasis Node.js, Express, dan database Excel",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "create-admin": "node scripts/create-admin.js",
+    "test": "node scripts/smoke-test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^18.0.9",
+    "express": "^4.21.2",
+    "googleapis": "^187.0.0",
+    "xlsx": "^0.18.5"
+  }
+}
