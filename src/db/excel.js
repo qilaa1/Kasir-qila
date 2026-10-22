@@ -270,74 +270,129 @@ function backup() {
   return target;
 }
 
+
 async function commit(mutator) {
   return withWrite(async () => {
-    let wb;
-    let originalBuffer;
-    let etag;
+    const MAX_ATTEMPTS = isVercel ? 3 : 1;
 
-    if (isVercel) {
-      const remote = await loadBlob();
-      wb = remote.workbook;
-      originalBuffer = remote.buffer;
-      etag = remote.etag;
-    } else {
-      wb = await readWorkbook();
-    }
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      let wb;
+      let originalBuffer;
+      let etag;
 
-    ensureStructure(wb);
+      if (isVercel) {
+        const remote = await loadBlob();
 
-    const data = {};
-    for (const name of Object.keys(SHEET_DEFS)) {
-      data[name] = getRows(wb, name);
-    }
+        wb = remote.workbook;
+        originalBuffer = remote.buffer;
+        etag = remote.etag;
 
-    const result = mutator(data, wb);
+        if (!etag) {
+          throw new Error(
+            'ETag database Blob tidak tersedia. Penyimpanan dibatalkan.'
+          );
+        }
+      } else {
+        wb = await readWorkbook();
+      }
 
-    if (result && typeof result.then === 'function') {
-      throw new Error(
-        'Mutator commit harus sinkron; jangan gunakan callback async.'
-      );
-    }
+      ensureStructure(wb);
 
-    for (const name of Object.keys(SHEET_DEFS)) {
-      const columns = sheetColumns(wb, name);
-      const ws = XLSX.utils.aoa_to_sheet([columns]);
+      const data = {};
 
-      for (const row of data[name]) {
-        XLSX.utils.sheet_add_aoa(
-          ws,
-          [columns.map((column) =>
-            row[column] === undefined || row[column] === null
-              ? null
-              : row[column]
-          )],
-          { origin: -1 }
+      for (const name of Object.keys(SHEET_DEFS)) {
+        data[name] = getRows(wb, name);
+      }
+
+      // Mutator dijalankan ulang hanya setelah konflik ETag.
+      // ID, stok, dan transaksi dihitung dari workbook terbaru.
+      const result = mutator(data, wb);
+
+      if (result && typeof result.then === 'function') {
+        throw new Error(
+          'Mutator commit harus sinkron; jangan gunakan callback async.'
         );
       }
 
-      wb.Sheets[name] = ws;
+      for (const name of Object.keys(SHEET_DEFS)) {
+        const columns = sheetColumns(wb, name);
+        const ws = XLSX.utils.aoa_to_sheet([columns]);
+
+        for (const row of data[name]) {
+          XLSX.utils.sheet_add_aoa(
+            ws,
+            [
+              columns.map((column) =>
+                row[column] === undefined || row[column] === null
+                  ? null
+                  : row[column]
+              )
+            ],
+            { origin: -1 }
+          );
+        }
+
+        wb.Sheets[name] = ws;
+      }
+
+      if (!isVercel) {
+        backup();
+        atomicWrite(wb);
+        return result;
+      }
+
+      try {
+        // Penyimpanan bersyarat mencegah menimpa versi
+        // database yang berubah setelah pembacaan.
+        await put(BLOB_PATH, workbookBuffer(wb), {
+          access: 'private',
+          token: process.env.BLOB_READ_WRITE_TOKEN,
+          contentType: EXCEL_TYPE,
+          addRandomSuffix: false,
+          allowOverwrite: true,
+          ifMatch: etag
+        });
+
+        // Backup versi sebelumnya setelah penyimpanan utama
+        // berhasil. Kegagalan backup tidak boleh membuat
+        // transaksi yang sudah tersimpan tampak gagal.
+        try {
+          await backupBlob(originalBuffer);
+        } catch (backupError) {
+          console.error(
+            '[DB] Peringatan: transaksi tersimpan, tetapi backup gagal:',
+            backupError.message
+          );
+        }
+
+        return result;
+      } catch (error) {
+        const isEtagConflict =
+          error?.name === 'BlobPreconditionFailedError' ||
+          /ETag mismatch|Precondition failed/i.test(
+            String(error?.message || '')
+          );
+
+        if (!isEtagConflict) {
+          throw error;
+        }
+
+        console.warn(
+          `[DB] Konflik ETag saat menyimpan (percobaan ${attempt}/${MAX_ATTEMPTS}).`
+        );
+
+        if (attempt === MAX_ATTEMPTS) {
+          const conflictError = new Error(
+            'Database sedang berubah oleh proses lain. Penjualan belum dapat dipastikan tersimpan; periksa riwayat sebelum mencoba ulang.'
+          );
+          conflictError.statusCode = 409;
+          conflictError.cause = error;
+          throw conflictError;
+        }
+      }
     }
 
-    if (isVercel) {
-      // Backup versi sebelumnya sebelum menyimpan perubahan.
-      await backupBlob(originalBuffer);
-
-      // Jangan menimpa data yang berubah sejak dibaca.
-      await put(BLOB_PATH, workbookBuffer(wb), {
-        access: 'private',
-        token: process.env.BLOB_READ_WRITE_TOKEN,
-        contentType: EXCEL_TYPE,
-        addRandomSuffix: false,
-        allowOverwrite: true,
-        ifMatch: etag
-      });
-    } else {
-      backup();
-      atomicWrite(wb);
-    }
-
-    return result;
+    throw new Error('Penyimpanan database gagal.');
   });
 }
 
