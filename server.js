@@ -35,19 +35,33 @@ app.use((req, res, next) => {
 });
 
 // ------------------------------------------------------------ bootstrap database & admin
-async function bootstrap() {
-  db.ensureDirs();
-  db.ensureStructure(db.readWorkbook());
 
-  const data = db.readAll();
+ // ------------------------------------------------------------
+ // Bootstrap database & admin
+ async function bootstrap() {
+  const data = await db.readAll();
   const users = data.Users || [];
-  const adaAdmin = users.some((u) => cleanStr(u.role).toLowerCase() === 'admin' && toInt(u.aktif) !== 0);
+
+  const adaAdmin = users.some(
+    (u) =>
+      cleanStr(u.role).toLowerCase() === 'admin' &&
+      toInt(u.aktif) !== 0
+  );
 
   if (!adaAdmin) {
-    console.log(`[ADMIN] Belum ada akun admin. Membuat akun awal: "${config.ADMIN_USERNAME}"`);
+    let adminDibuat = false;
+
     await db.commit((d) => {
-      if ((d.Users || []).some((u) => cleanStr(u.username).toLowerCase() === config.ADMIN_USERNAME.toLowerCase())) return;
+      const usernameSudahAda = (d.Users || []).some(
+        (u) =>
+          cleanStr(u.username).toLowerCase() ===
+          cleanStr(config.ADMIN_USERNAME).toLowerCase()
+      );
+
+      if (usernameSudahAda) return;
+
       const hash = bcrypt.hashSync(config.ADMIN_PASSWORD, 10);
+
       d.Users.push({
         id: nextId(d.Users),
         username: config.ADMIN_USERNAME,
@@ -56,9 +70,22 @@ async function bootstrap() {
         role: 'admin',
         aktif: 1
       });
+
+      adminDibuat = true;
     });
-    console.log(`[ADMIN] Akun dibuat. Username: ${config.ADMIN_USERNAME} | Password: ${config.ADMIN_PASSWORD}`);
-    console.log('[ADMIN] SEGERA ganti password! Buat akun baru dengan: npm run create-admin');
+
+    if (adminDibuat) {
+      console.log(
+        `[ADMIN] Akun awal berhasil dibuat: ${config.ADMIN_USERNAME}`
+      );
+      console.log(
+        '[ADMIN] Ganti kata sandi awal setelah berhasil login.'
+      );
+    } else {
+      console.warn(
+        '[ADMIN] Username admin sudah ada, tetapi belum ada admin aktif. Periksa akun melalui prosedur pemulihan yang aman.'
+      );
+    }
   }
 }
 
