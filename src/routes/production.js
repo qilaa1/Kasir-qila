@@ -44,7 +44,7 @@ function serializeBatch(b, items) {
 }
 
 router.get('/', wrap(async (req, res) => {
-  const data = db.readAll();
+  const data = await db.readAll();
   const dari = cleanStr(req.query.dari, 10);
   const sampai = cleanStr(req.query.sampai, 10);
   const limit = Math.min(Math.max(toInt(req.query.limit) || 200, 1), 1000);

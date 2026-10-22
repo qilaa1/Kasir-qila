@@ -239,7 +239,7 @@ function hasHistory(data, id) {
 // GET PRODUK
 // ---------------------------------------------------------------
 router.get('/', wrap(async (req, res) => {
-  const data = db.readAll();
+  const data = await db.readAll();
   const includeNonaktif =
     String(req.query.include_nonaktif || '') === '1';
 
@@ -322,7 +322,7 @@ router.put('/:id', wrap(async (req, res) => {
 
   // Ambil produk lama agar kategori Bahan Baku tetap dikenali
   // meskipun kategori tidak dikirim oleh form edit.
-  const dataAwal = db.readAll();
+  const dataAwal = await db.readAll();
   const produkLama = findProduct(dataAwal.Products, id);
 
   if (!produkLama) {

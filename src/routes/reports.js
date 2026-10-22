@@ -108,14 +108,14 @@ function hitung(data, { dari, sampai }) {
 
 router.get('/summary', wrap(async (req, res) => {
   const p = periode(req);
-  const data = db.readAll();
+  const data = await db.readAll();
   res.json({ success: true, data: hitung(data, p) });
 }));
 
 router.get('/reports', wrap(async (req, res) => {
   const p = periode(req);
   const jenis = cleanStr(req.query.jenis, 30) || 'penjualan';
-  const data = db.readAll();
+  const data = await db.readAll();
 
   let result;
   if (jenis === 'penjualan' || jenis === 'pembelian' || jenis === 'pengeluaran' || jenis === 'stok' || jenis === 'produksi') {

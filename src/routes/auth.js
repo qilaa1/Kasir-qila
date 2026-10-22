@@ -28,7 +28,7 @@ router.post('/login', wrap(async (req, res) => {
   const username = cleanStr(body.username, 50).toLowerCase();
   const password = String(body.password);
 
-  const data = db.readAll();
+  const data = await db.readAll();
   const user = (data.Users || []).find(
     (u) => cleanStr(u.username).toLowerCase() === username && toInt(u.aktif) !== 0
   );
