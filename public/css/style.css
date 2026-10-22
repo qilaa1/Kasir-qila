@@ -802,3 +802,70 @@
     -webkit-print-color-adjust: exact;
   }
 }
+
+@media print {
+  /* Sembunyikan semua halaman selain struk */
+  body * {
+    visibility: hidden !important;
+  }
+
+  #modalRoot,
+  #modalRoot * {
+    visibility: visible !important;
+  }
+
+  #modalRoot {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  .modal-struk {
+    position: static !important;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 8mm !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .struk-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .struk-table thead {
+    display: table-header-group !important;
+  }
+
+  .struk-table tbody {
+    display: table-row-group !important;
+  }
+
+  .struk-table tr {
+    display: table-row !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .struk-actions,
+  .modal-actions,
+  [data-close],
+  #cetakStruk {
+    display: none !important;
+  }
+
+  .struk-footer,
+  .struk-summary,
+  .struk-info {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}

@@ -294,6 +294,8 @@ window.Pages.penjualan = {
       root.innerHTML = '';
     });
   
+    
+
     root.querySelector('#cetakStruk').addEventListener('click', () => {
       window.print();
     });
